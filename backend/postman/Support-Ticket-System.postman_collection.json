@@ -1,0 +1,152 @@
+{
+  "info": {
+    "name": "Support Ticket System API",
+    "description": "API coverage for registration, login, ticket CRUD, comments, authorization, agent management, and invalid input. Set the collection variables locally before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "customerName", "value": "Sample Customer" },
+    { "key": "customerEmail", "value": "" },
+    { "key": "customerPassword", "value": "" },
+    { "key": "agentEmail", "value": "" },
+    { "key": "agentPassword", "value": "" },
+    { "key": "adminEmail", "value": "" },
+    { "key": "adminPassword", "value": "" },
+    { "key": "otherTicketId", "value": "" },
+    { "key": "staffId", "value": "" },
+    { "key": "ticketId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Customer flow",
+      "item": [
+        {
+          "name": "Register customer",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{customerName}}\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/register" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Registration succeeds or account already exists', () => pm.expect([201, 409]).to.include(pm.response.code));"] } }]
+        },
+        {
+          "name": "Customer login",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Login succeeds', () => pm.response.to.have.status(200));", "pm.test('Response includes user role', () => pm.expect(pm.response.json().user.role).to.eql('user'));" ] } }]
+        },
+        {
+          "name": "Invalid login is rejected",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"incorrect-password\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Invalid credentials are rejected', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Current user",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Cookie session returns the customer', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Customer cannot access another customer's ticket",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets/{{otherTicketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Customer is forbidden from another customer ticket', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Create ticket",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"subject\": \"Postman sample ticket\",\n  \"description\": \"This ticket was created by the Postman collection.\",\n  \"priority\": \"medium\",\n  \"category\": \"general\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tickets" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Ticket is created', () => pm.response.to.have.status(201));", "pm.collectionVariables.set('ticketId', pm.response.json().ticketId);"] } }]
+        },
+        {
+          "name": "Get customer tickets",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets?sort=created&order=desc" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Ticket list loads', () => pm.response.to.have.status(200));", "pm.test('Response contains a ticket array', () => pm.expect(pm.response.json().tickets).to.be.an('array'));"] } }]
+        },
+        {
+          "name": "Get ticket by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets/{{ticketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Ticket details load', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Add ticket comment",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"comment\": \"A sample customer response from Postman.\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tickets/{{ticketId}}/comments" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Comment is added', () => pm.response.to.have.status(201));"] } }]
+        },
+        {
+          "name": "Get ticket comments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets/{{ticketId}}/comments" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Comments load', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Update ticket",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"subject\": \"Updated Postman sample ticket\",\n  \"description\": \"This ticket was updated by the Postman collection.\",\n  \"priority\": \"high\",\n  \"category\": \"technical\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tickets/{{ticketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Ticket is updated', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Invalid ticket input",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"subject\": \"x\",\n  \"description\": \"short\",\n  \"priority\": \"impossible\",\n  \"category\": \"other\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tickets" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Invalid ticket data returns 400', () => pm.response.to.have.status(400));"] } }]
+        },
+        {
+          "name": "Customer cannot access user administration",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/users" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Customer is forbidden from user administration', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Invalid ticket id returns not found",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets/999999999" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Missing ticket returns 404', () => pm.response.to.have.status(404));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Agent flow",
+      "item": [
+        {
+          "name": "Agent login",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{agentEmail}}\",\n  \"password\": \"{{agentPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Agent login succeeds', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Get agent dashboard statistics",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/stats" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Agent can view ticket statistics', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Agent can view users",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/users" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Agent can view users', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Get assignment options",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/staff/options" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Agent can get assignment options', () => pm.response.to.have.status(200));", "const staff = pm.response.json().staff;", "if (staff.length) pm.collectionVariables.set('staffId', staff[0].id);"] } }]
+        },
+        {
+          "name": "Agent updates status and assigns ticket",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"in_progress\",\n  \"assigned_to\": {{staffId}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tickets/{{ticketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Agent can update and assign ticket', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Support agent cannot perform admin deletion",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/tickets/{{ticketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Support agent cannot delete customer ticket', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Admin login",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin login succeeds', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Admin deletes a ticket",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/tickets/{{ticketId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can delete ticket', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/auth/logout" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Logout succeeds', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Unauthenticated ticket access is rejected",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/tickets" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Protected endpoint rejects logged-out request', () => pm.response.to.have.status(401));"] } }]
+        }
+      ]
+    }
+  ]
+}
