@@ -5,7 +5,9 @@ See the [project README](../README.md) for local setup, schema migration, enviro
 Useful files:
 
 - `database/schema.sql` creates the complete schema for a new database.
-- `migrations/001_create_tickets.sql` adds tickets and comments to an existing users table.
+- `migrations/001_create_tickets.sql` adds tickets and comments to a database with the existing users table only.
+- `migrations/002_upgrade_legacy_tickets.sql` upgrades the original ticket/comment tables once, preserving their signed `INT` IDs and existing rows.
 - `database/queries.sql` contains the requested open-ticket/customer JOIN example.
 - `scripts/seed.js` creates configurable sample accounts using bcrypt-hashed passwords.
 - `postman/Support-Ticket-System.postman_collection.json` contains an importable API test collection.
+- Run `npm test` for unit tests and `npm run test:api` for opt-in database-backed API tests; the API suite cleans up its temporary records.

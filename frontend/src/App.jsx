@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import './App.css'
+import FormField from './components/FormField'
+import PriorityBadge from './components/PriorityBadge'
+import StatusBadge from './components/StatusBadge'
+import TicketRow from './components/TicketRow'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 const priorities = ['low', 'medium', 'high', 'urgent']
@@ -201,9 +205,9 @@ function App() {
           <div className="eyebrow">YOUR SUPPORT SPACE</div><h2>{registering ? 'Create your account' : 'Welcome back'}</h2>
           <p className="form-subtitle">{registering ? 'Get started with your support account.' : 'Enter your details to sign in to your account.'}</p>
           <form onSubmit={handleAuth}>
-            {registering && <label>Name<input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required /></label>}
-            <label>Email address<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
-            <label>Password<input type="password" autoComplete={registering ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+            {registering && <FormField label="Name"><input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required /></FormField>}
+            <FormField label="Email address"><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></FormField>
+            <FormField label="Password"><input type="password" autoComplete={registering ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} required /></FormField>
             <button className="submit-button" type="submit" disabled={authBusy}>{authBusy ? 'Please wait…' : registering ? 'Create account' : 'Sign in'}<span aria-hidden="true">→</span></button>
           </form>
           {authMessage && <p className={`form-message ${authError ? 'is-error' : ''}`} role="status">{authMessage}</p>}
@@ -245,16 +249,18 @@ function App() {
               <select aria-label="Sort tickets" value={sort} onChange={(event) => setSort(event.target.value)}><option value="updated">Recently updated</option><option value="created">Date created</option><option value="priority">Priority</option><option value="status">Status</option></select>
               <select aria-label="Sort order" value={order} onChange={(event) => setOrder(event.target.value)}><option value="desc">Descending</option><option value="asc">Ascending</option></select></div>
             {ticketLoading ? <div className="empty-state">Loading tickets…</div> : tickets.length === 0 ? <div className="empty-state"><div className="empty-icon">▤</div><strong>No tickets found</strong><span>{search || filterStatus || filterPriority ? 'Try adjusting your filters.' : 'Create a ticket when you need a hand.'}</span></div> :
-              <div className="ticket-list">{tickets.map((ticket) => <button key={ticket.id} className={`ticket-row ${selectedTicket?.id === ticket.id ? 'selected' : ''}`} onClick={() => openTicket(ticket)}>
-                <div className="ticket-row-top"><strong>{ticket.subject}</strong><span className={`status-tag ${ticket.status}`}>{ticket.status.replace('_', ' ')}</span></div>
-                <div className="ticket-row-bottom"><span>#{ticket.id} · {ticket.category}</span><span className={`priority-dot ${ticket.priority}`}>{ticket.priority}</span><time>{new Date(ticket.updated_at).toLocaleDateString()}</time></div>
-                {isStaff && <div className="ticket-requester">From {ticket.creator_name}{ticket.assignee_name ? ` · Assigned to ${ticket.assignee_name}` : ' · Unassigned'}</div>}
-              </button>)}</div>}
+              <div className="ticket-list">{tickets.map((ticket) => <TicketRow
+                key={ticket.id}
+                ticket={ticket}
+                selected={selectedTicket?.id === ticket.id}
+                isStaff={isStaff}
+                onSelect={openTicket}
+              />)}</div>}
           </section>
 
           <section className="content-card detail-card">{selectedTicket ? <>
             <div className="detail-top"><span className="eyebrow">TICKET #{selectedTicket.id}</span><button className="close-detail" onClick={() => setSelectedTicket(null)} aria-label="Close ticket details">×</button></div>
-            <h2>{selectedTicket.subject}</h2><div className="detail-tags"><span className={`status-tag ${selectedTicket.status}`}>{selectedTicket.status.replace('_', ' ')}</span><span className={`priority-dot ${selectedTicket.priority}`}>{selectedTicket.priority} priority</span></div>
+            <h2>{selectedTicket.subject}</h2><div className="detail-tags"><StatusBadge status={selectedTicket.status} /><PriorityBadge priority={selectedTicket.priority} suffix=" priority" /></div>
             <p className="detail-description">{selectedTicket.description}</p>
             <section className="comments-section"><div className="comments-heading"><h3>Conversation</h3><span>{comments.length}</span></div>
               {comments.length === 0 ? <p className="no-comments">No comments yet. Add a response to start the conversation.</p> : <div className="comment-list">{comments.map((entry) => <article className="comment-item" key={entry.id}><div className="comment-author"><strong>{entry.author_name}</strong><span>{entry.author_role}</span><time>{new Date(entry.created_at).toLocaleString()}</time></div><p>{entry.comment}</p></article>)}</div>}

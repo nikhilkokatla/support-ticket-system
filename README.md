@@ -19,7 +19,7 @@ support-ticket-system/
 │   ├── auth/                 # Registration and login/session endpoints
 │   ├── database/             # Fresh schema and example SQL queries
 │   ├── middleware/           # Authentication and role checks
-│   ├── migrations/           # Add tickets and comments to an existing users table
+│   ├── migrations/           # Create or upgrade ticket tables
 │   ├── postman/              # Importable API collection
 │   ├── scripts/              # Hashed sample-account and sample-ticket seeding
 │   ├── tests/                # Unit tests
@@ -33,10 +33,16 @@ support-ticket-system/
 
 1. Use Node.js 22.12 or newer (or Node 20.19 or newer) and a reachable MySQL database. The current application expects the existing `users` table to contain `id`, `name`, `email`, `password_hash`, `role`, and `created_at`.
 2. Copy the blank keys from `backend/.env.example` to `backend/.env`. Fill in your own database settings and set `JWT_SECRET` to a fresh random value (for example, generate one locally with `openssl rand -hex 32`). Do not commit `.env` or share its values.
-3. Check the type and signedness of `users.id` with `SHOW CREATE TABLE users;`. In `backend/migrations/001_create_tickets.sql`, make `tickets.user_id`, `tickets.assigned_to`, and `ticket_comments.user_id` match that type. Then apply the migration with your MySQL password prompt:
+3. Inspect the current table structure before choosing a migration. For a database with only the existing `users` table, check `users.id` with `SHOW CREATE TABLE users;`, make the user ID columns in `backend/migrations/001_create_tickets.sql` match its type and signedness, and apply that migration. For a database created by the earlier version of this project that already has the original `tickets` and `ticket_comments` tables, inspect those tables and apply `backend/migrations/002_upgrade_legacy_tickets.sql` once. That migration preserves rows and adds assignment, category, update timestamps, indexes, and cascading comment deletion; it assumes the legacy tables use signed `INT` IDs. Do not run both migrations blindly or rerun the one-time legacy upgrade.
 
    ```sh
    mysql -u YOUR_DB_USER -p YOUR_DB_NAME < backend/migrations/001_create_tickets.sql
+   ```
+
+   For the legacy ticket tables described above, use this command instead:
+
+   ```sh
+   mysql -u YOUR_DB_USER -p YOUR_DB_NAME < backend/migrations/002_upgrade_legacy_tickets.sql
    ```
 
    For a new database, use `backend/database/schema.sql` instead. It creates users, tickets, and comments if they do not already exist.
@@ -103,7 +109,9 @@ cd backend && npm test
 cd ../frontend && npm run lint && npm run build
 ```
 
-Import `backend/postman/Support-Ticket-System.postman_collection.json` into Postman. Set its collection variables with local test customer and agent credentials. Run the customer requests first, then the agent requests; the login response sets the cookie used by following requests. The collection covers registration, login and invalid login, ticket create/read/update/delete, comments, role restrictions, agent statistics, and user listing.
+For database-backed API integration tests, configure `backend/.env` with a reachable test database, then run `npm run test:api` from `backend/`. The suite creates uniquely named temporary accounts and tickets and removes them after the run. Keep the database available for the duration of the test command.
+
+Import `backend/postman/Support-Ticket-System.postman_collection.json` into Postman. Set its collection variables with a valid base customer email, customer name/password, and agent/admin credentials. The registration request creates a unique plus-addressed email for each run and requires HTTP 201; the following customer login uses that generated email. Run the customer requests first, then the agent requests; the login response sets the cookie used by following requests. The collection covers registration, login and invalid login, ticket create/read/update/delete, comments, role restrictions, agent statistics, and user listing.
 
 The automated Node tests exercise validation and ticket ownership rules. The Postman requests are database-backed and require the schema, configured credentials, and running API.
 
@@ -117,4 +125,13 @@ The automated Node tests exercise validation and ticket ownership rules. The Pos
 4. Render generates `JWT_SECRET` for the service. Keep all database values in Render's environment settings; do not put them in Git.
 5. Deploy, check `/health`, and test customer and support flows against the public URL. Record the live app URL and GitHub repository URL for submission.
 
-Deployment is not complete until the external GitHub repository and public hosting service are connected and the required remote MySQL database is configured.
+### Deploy without GitHub
+
+Railway supports uploading a local source directory with its CLI, so this option does not require a GitHub repository. It does require a Railway account and may incur service charges; review the selected plan before creating resources.
+
+1. Install the [Railway CLI](https://docs.railway.com/cli), create a Railway project with an empty web service and a MySQL service, then link the local project with `railway link`.
+2. Configure the web service build command as `npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend`, the start command as `npm start --prefix backend`, and the health check path as `/health`.
+3. Set the web service's `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, and a fresh `JWT_SECRET` through Railway's private variable settings. Connect the web service to the MySQL service using its private networking values.
+4. From the project root, run `railway up` to upload and deploy the local source. Railway respects `.gitignore`, so local environment files are excluded. Configure public networking/domain for the web service, apply the appropriate schema or migration to the hosted MySQL database, then verify `/health` and test the deployed API.
+
+The Render blueprint remains available for Git based deployment. Both hosting options still need a remotely reachable MySQL database and private environment variables. A public deployment has not been created yet.

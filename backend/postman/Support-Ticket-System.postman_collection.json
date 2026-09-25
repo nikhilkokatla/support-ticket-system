@@ -23,12 +23,12 @@
       "item": [
         {
           "name": "Register customer",
-          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{customerName}}\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/register" },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Registration succeeds or account already exists', () => pm.expect([201, 409]).to.include(pm.response.code));"] } }]
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{customerName}}\",\n  \"email\": \"{{runCustomerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/register" },
+          "event":[{"listen":"prerequest","script":{"type":"text/javascript","exec":["const configuredEmail = pm.collectionVariables.get('customerEmail');","if (typeof configuredEmail !== 'string') throw new Error('Set customerEmail to a valid email address.');","const at = configuredEmail.lastIndexOf('@');","if (at < 1 || at === configuredEmail.length - 1) throw new Error('Set customerEmail to a valid email address.');","const localPart = configuredEmail.slice(0, at).split('+')[0];","const domain = configuredEmail.slice(at + 1);","const uniqueEmail = `${localPart}+postman-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@${domain}`;","pm.collectionVariables.set('runCustomerEmail', uniqueEmail);"]}},{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('A new customer registers successfully', () => pm.response.to.have.status(201));","pm.test('Registration returns a user ID', () => pm.expect(pm.response.json().userId).to.exist);"]}}]
         },
         {
           "name": "Customer login",
-          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{runCustomerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/auth/login" },
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Login succeeds', () => pm.response.to.have.status(200));", "pm.test('Response includes user role', () => pm.expect(pm.response.json().user.role).to.eql('user'));" ] } }]
         },
         {

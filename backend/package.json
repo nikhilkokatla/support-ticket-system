@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node scripts/seed.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:api": "RUN_API_INTEGRATION_TESTS=1 node --test tests/api.integration.test.js"
   },
   "keywords": [],
   "author": "",
