@@ -117,15 +117,15 @@ The automated Node tests exercise validation and ticket ownership rules. The Pos
 
 ## Render deployment
 
-`render.yaml` defines a separate backend web service and frontend static site. It does not create a MySQL server. First provision MySQL 8 as a Render private service from Render's MySQL template, and attach persistent storage at `/var/lib/mysql`. Render requires this mount path for the template's database files. Check current service and disk pricing before creating it.
+`render.yaml` defines a separate backend web service and frontend static site. For a no-cost database, use TiDB Cloud Starter, which speaks the MySQL protocol and supports the app's `mysql2` driver. Its free quota is 5 GiB of row data and 50 million request units per month; operations are throttled when the free quota is reached. Keep the TiDB spending limit at zero to prevent paid usage. Render's own free Postgres expires after 30 days, and Render does not provide free persistent MySQL hosting.
 
-Create the MySQL service outside this repository. Enter `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_ROOT_PASSWORD` through Render's private environment settings. Keep the service private so only services in the Render workspace can reach it.
+Create a TiDB Cloud Starter instance in a region close to the Render services. In TiDB's Connect dialog, choose the public endpoint and copy the host, port, user, and password. Set these variables on the Render backend service: `DB_HOST`, `DB_PORT` (usually `4000`), `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. `DB_SSL=true` enables the TLS connection required by TiDB Cloud Starter. Keep the database password in Render's environment settings, never in this repository or an `.env` file.
 
 Then create a Render Blueprint from this GitHub repository. The blueprint defines:
 
 - Backend: root directory `backend`, build command `npm install`, start command `node server.js`, health check `/health`.
 - Frontend: root directory `frontend`, build command `npm install && npm run build`, publish directory `dist`.
 
-In the backend service settings, set `DB_HOST` to the MySQL private hostname, `DB_PORT` to `3306`, and map `DB_NAME`, `DB_USER`, and `DB_PASSWORD` to the MySQL service's database, user, and application password. Also set `FRONTEND_URL` to the frontend's public Render URL. Render generates `JWT_SECRET` from the blueprint. In the frontend settings, set `VITE_API_URL` to the backend's public origin without a path (for example, `https://your-backend.onrender.com`); the frontend adds `/api/...` to requests. Vite embeds this value during the build; it is not a secret.
+In the backend service settings, set `FRONTEND_URL` to the frontend's public Render URL. Render generates `JWT_SECRET` from the blueprint. In the frontend settings, set `VITE_API_URL` to the backend's public origin without a path (for example, `https://your-backend.onrender.com`); the frontend adds `/api/...` to requests. Vite embeds this value during the build; it is not a secret.
 
-For a new hosted database, apply `backend/database/schema.sql` before using the app. Keep all database passwords and other secrets in Render's environment settings, never in this repository or its `.env` files. After deploying both app services, verify the backend at `/health`, then test registration, login, ticket creation, and agent ticket management through the public frontend URL.
+For a new TiDB database, create a database first and apply `backend/database/schema.sql` using TiDB's SQL editor or a MySQL client configured with TLS. Keep all database passwords and other secrets in Render's environment settings, never in this repository or its `.env` files. After deploying both app services, verify the backend at `/health`, then test registration, login, ticket creation, and agent ticket management through the public frontend URL.
