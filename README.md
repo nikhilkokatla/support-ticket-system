@@ -115,23 +115,17 @@ Import `backend/postman/Support-Ticket-System.postman_collection.json` into Post
 
 The automated Node tests exercise validation and ticket ownership rules. The Postman requests are database-backed and require the schema, configured credentials, and running API.
 
-## Deployment
+## Render deployment
 
-`render.yaml` builds the Vite frontend and runs the Express API as one Render web service. The backend serves the compiled frontend, so the deployed application uses one origin. To deploy:
+`render.yaml` defines a separate backend web service and frontend static site. It does not create a MySQL server. First provision MySQL 8 as a Render private service from Render's MySQL template, and attach persistent storage at `/var/lib/mysql`. Render requires this mount path for the template's database files. Check current service and disk pricing before creating it.
 
-1. Push this project to a GitHub repository.
-2. Create a Render Blueprint from that repository and review the service settings.
-3. Configure `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT` with a remotely reachable MySQL database. Apply the schema/migration there before testing. Render's blueprint does not create a MySQL server.
-4. Render generates `JWT_SECRET` for the service. Keep all database values in Render's environment settings; do not put them in Git.
-5. Deploy, check `/health`, and test customer and support flows against the public URL. Record the live app URL and GitHub repository URL for submission.
+Create the MySQL service outside this repository. Enter `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_ROOT_PASSWORD` through Render's private environment settings. Keep the service private so only services in the Render workspace can reach it.
 
-### Deploy without GitHub
+Then create a Render Blueprint from this GitHub repository. The blueprint defines:
 
-Railway supports uploading a local source directory with its CLI, so this option does not require a GitHub repository. It does require a Railway account and may incur service charges; review the selected plan before creating resources.
+- Backend: root directory `backend`, build command `npm install`, start command `node server.js`, health check `/health`.
+- Frontend: root directory `frontend`, build command `npm install && npm run build`, publish directory `dist`.
 
-1. Install the [Railway CLI](https://docs.railway.com/cli), create a Railway project with an empty web service and a MySQL service, then link the local project with `railway link`.
-2. Configure the web service build command as `npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend`, the start command as `npm start --prefix backend`, and the health check path as `/health`.
-3. Set the web service's `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, and a fresh `JWT_SECRET` through Railway's private variable settings. Connect the web service to the MySQL service using its private networking values.
-4. From the project root, run `railway up` to upload and deploy the local source. Railway respects `.gitignore`, so local environment files are excluded. Configure public networking/domain for the web service, apply the appropriate schema or migration to the hosted MySQL database, then verify `/health` and test the deployed API.
+In the backend service settings, set `DB_HOST` to the MySQL private hostname, `DB_PORT` to `3306`, and map `DB_NAME`, `DB_USER`, and `DB_PASSWORD` to the MySQL service's database, user, and application password. Also set `FRONTEND_URL` to the frontend's public Render URL. Render generates `JWT_SECRET` from the blueprint. In the frontend settings, set `VITE_API_URL` to the backend's public origin without a path (for example, `https://your-backend.onrender.com`); the frontend adds `/api/...` to requests. Vite embeds this value during the build; it is not a secret.
 
-The Render blueprint remains available for Git based deployment. Both hosting options still need a remotely reachable MySQL database and private environment variables. A public deployment has not been created yet.
+For a new hosted database, apply `backend/database/schema.sql` before using the app. Keep all database passwords and other secrets in Render's environment settings, never in this repository or its `.env` files. After deploying both app services, verify the backend at `/health`, then test registration, login, ticket creation, and agent ticket management through the public frontend URL.
