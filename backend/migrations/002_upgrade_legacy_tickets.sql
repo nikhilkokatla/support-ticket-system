@@ -4,7 +4,7 @@
 -- Do not run this file against a fresh schema or run it more than once.
 
 ALTER TABLE tickets
-    MODIFY COLUMN status ENUM('open', 'in_progress', 'resolved', 'closed')
+    MODIFY COLUMN status ENUM('open', 'in_progress', 'completed', 'resolved', 'closed')
         NOT NULL DEFAULT 'open',
     MODIFY COLUMN priority ENUM('low', 'medium', 'high', 'urgent')
         NOT NULL DEFAULT 'medium',

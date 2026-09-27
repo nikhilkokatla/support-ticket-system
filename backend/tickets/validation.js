@@ -1,6 +1,6 @@
 const priorities = ["low", "medium", "high", "urgent"];
 const categories = ["account", "billing", "technical", "general"];
-const statuses = ["open", "in_progress", "resolved", "closed"];
+const statuses = ["open", "in_progress", "completed", "resolved", "closed"];
 
 function validateTicketFields(fields, { partial = false, staff = false } = {}) {
     const errors = [];

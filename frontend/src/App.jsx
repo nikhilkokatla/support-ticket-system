@@ -8,7 +8,7 @@ import TicketRow from './components/TicketRow'
 const API_URL = import.meta.env.VITE_API_URL || ''
 const priorities = ['low', 'medium', 'high', 'urgent']
 const categories = ['account', 'billing', 'technical', 'general']
-const statuses = ['open', 'in_progress', 'resolved', 'closed']
+const statuses = ['open', 'in_progress', 'completed', 'resolved', 'closed']
 
 async function api(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {

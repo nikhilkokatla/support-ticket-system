@@ -62,7 +62,7 @@ router.get("/tickets", async (req, res) => {
         }
 
         const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-        const sortOptions = { updated: "t.updated_at", created: "t.created_at", priority: "FIELD(t.priority, 'urgent', 'high', 'medium', 'low')", status: "FIELD(t.status, 'open', 'in_progress', 'resolved', 'closed')" };
+        const sortOptions = { updated: "t.updated_at", created: "t.created_at", priority: "FIELD(t.priority, 'urgent', 'high', 'medium', 'low')", status: "FIELD(t.status, 'open', 'in_progress', 'completed', 'resolved', 'closed')" };
         const sort = sortOptions[req.query.sort] || sortOptions.updated;
         const direction = req.query.order === "asc" ? "ASC" : "DESC";
         const tickets = await query(`${ticketSelect} ${where} ORDER BY ${sort} ${direction}, t.id DESC LIMIT 100`, values);

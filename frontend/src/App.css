@@ -98,7 +98,7 @@
 .status-tag { display: inline-flex; white-space: nowrap; border-radius: 20px; padding: 4px 8px; text-transform: capitalize; background: #eff2f5; color: #667385; font-size: 10px; font-weight: 600; }
 .status-tag.open { background: #edf4ff; color: #3268a8; }
 .status-tag.in_progress { background: #fff4df; color: #9a6611; }
-.status-tag.resolved, .status-tag.closed { background: #e9f6f0; color: #287553; }
+.status-tag.completed, .status-tag.resolved, .status-tag.closed { background: #e9f6f0; color: #287553; }
 .ticket-row-bottom { justify-content: flex-start; margin-top: 10px; color: #94a0ad; font-size: 10px; }
 .ticket-row-bottom time { margin-left: auto; }
 .priority-dot { color: #667385; text-transform: capitalize; font-size: 10px; }

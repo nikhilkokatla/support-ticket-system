@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     description TEXT NOT NULL,
     priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
     category ENUM('account', 'billing', 'technical', 'general') NOT NULL DEFAULT 'general',
-    status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL DEFAULT 'open',
+    status ENUM('open', 'in_progress', 'completed', 'resolved', 'closed') NOT NULL DEFAULT 'open',
     user_id INT NOT NULL,
     assigned_to INT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
