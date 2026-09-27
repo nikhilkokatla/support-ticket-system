@@ -85,6 +85,7 @@ router.post("/tickets", async (req, res) => {
         );
         return res.status(201).json({ message: "Ticket created", ticketId: result.insertId });
     } catch (error) {
+        console.error("Ticket creation failed:", error.code || "UNKNOWN", error.sqlState || "");
         return res.status(500).json({ message: "Unable to create ticket" });
     }
 });

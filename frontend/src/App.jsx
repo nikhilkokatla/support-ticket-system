@@ -45,6 +45,8 @@ function App() {
   const [search, setSearch] = useState('')
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [createBusy, setCreateBusy] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [users, setUsers] = useState([])
   const [staff, setStaff] = useState([])
@@ -133,6 +135,8 @@ function App() {
 
   const createTicket = async (event) => {
     event.preventDefault()
+    setCreateError('')
+    setCreateBusy(true)
     const form = new FormData(event.currentTarget)
     try {
       await api('/api/tickets', { method: 'POST', body: JSON.stringify({
@@ -141,7 +145,11 @@ function App() {
       setShowCreate(false)
       setTicketMessage('Your ticket has been created.')
       await loadTickets()
-    } catch (error) { setTicketMessage(error.message) }
+    } catch (error) {
+      setCreateError(error.message)
+    } finally {
+      setCreateBusy(false)
+    }
   }
 
   const editTicket = async (event) => {
@@ -230,7 +238,7 @@ function App() {
 
       <section className="dashboard-main">
         <header className="dashboard-header"><div><div className="eyebrow">{user.role.toUpperCase()} WORKSPACE</div><h1>{activeView === 'users' ? 'People' : isStaff ? 'Ticket queue' : 'My tickets'}</h1></div>
-          {activeView === 'tickets' && <button className="primary-button" onClick={() => setShowCreate(true)}>＋ New ticket</button>}</header>
+          {activeView === 'tickets' && <button className="primary-button" onClick={() => { setCreateError(''); setShowCreate(true) }}>＋ New ticket</button>}</header>
         {ticketMessage && <div className="notice" role="status"><span>{ticketMessage}</span><button onClick={() => setTicketMessage('')} aria-label="Dismiss">×</button></div>}
         {isStaff && activeView === 'tickets' && <section className="stats-grid" aria-label="Ticket statistics">
           <div className="stat-card"><span>Total tickets</span><strong>{stats.total}</strong></div>
@@ -277,7 +285,9 @@ function App() {
       {showCreate && <div className="modal-backdrop" onClick={(event) => { if (event.target === event.currentTarget) setShowCreate(false) }}><section className="create-modal" role="dialog" aria-modal="true" aria-labelledby="create-title">
         <div className="modal-title"><div><div className="eyebrow">NEW REQUEST</div><h2 id="create-title">How can we help?</h2></div><button className="close-detail" onClick={() => setShowCreate(false)} aria-label="Close">×</button></div>
         <form onSubmit={createTicket}><label>Subject<input name="subject" minLength="3" maxLength="150" placeholder="Briefly describe the issue" required /></label><label>Description<textarea name="description" minLength="10" maxLength="5000" rows="5" placeholder="Share details that will help us resolve your request" required /></label>
-          <div className="form-columns"><label>Category<select name="category">{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label>Priority<select name="priority">{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div><button className="primary-button" type="submit">Submit ticket <span>→</span></button>
+          <div className="form-columns"><label>Category<select name="category">{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label>Priority<select name="priority">{priorities.map((priority) => <option key={priority}>{priority}</option>)}</select></label></div>
+          {createError && <p className="comment-error" role="alert">{createError}</p>}
+          <button className="primary-button" type="submit" disabled={createBusy}>{createBusy ? 'Submitting…' : <>Submit ticket <span>→</span></>}</button>
         </form>
       </section></div>}
 
