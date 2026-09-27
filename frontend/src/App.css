@@ -66,8 +66,8 @@
 .profile-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
 .profile-copy strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-copy span { font-size: 11px; color: #91a7b2; text-transform: capitalize; }
-.logout-icon { border: 0; color: #a9bbc4; background: transparent; font-size: 20px; }
-.logout-icon:hover { color: white; }
+.logout-button { flex: none; border: 1px solid #ffffff30; border-radius: 6px; padding: 6px 8px; color: #d5e0e5; background: transparent; font-size: 11px; font-weight: 600; }
+.logout-button:hover { color: white; background: #ffffff14; }
 .dashboard-main { min-width: 0; padding: 48px clamp(24px, 4vw, 64px); }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
 .dashboard-header h1 { margin: 8px 0 0; font: 700 30px 'Manrope', sans-serif; letter-spacing: -1px; color: #1d2939; }

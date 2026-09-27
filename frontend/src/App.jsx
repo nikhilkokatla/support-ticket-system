@@ -233,7 +233,7 @@ function App() {
         <a className="brand" href="/">Relay<span>Desk</span></a><div className="sidebar-label">WORKSPACE</div>
         <button className={`nav-item ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => setActiveView('tickets')}><span>▤</span>{isStaff ? 'Ticket queue' : 'My tickets'}</button>
         {isStaff && <button className={`nav-item ${activeView === 'users' ? 'active' : ''}`} onClick={() => setActiveView('users')}><span>♙</span>Users</button>}
-        <div className="sidebar-bottom"><div className="avatar">{user.name?.[0]?.toUpperCase()}</div><div className="profile-copy"><strong>{user.name}</strong><span>{user.email}</span><span>{user.role}</span></div><button className="logout-icon" title="Log out" onClick={handleLogout}>↪</button></div>
+        <div className="sidebar-bottom"><div className="avatar">{user.name?.[0]?.toUpperCase()}</div><div className="profile-copy"><strong>{user.name}</strong><span>{user.email}</span><span>{user.role}</span></div><button className="logout-button" onClick={handleLogout}>Logout</button></div>
       </aside>
 
       <section className="dashboard-main">
