@@ -61,12 +61,13 @@
 .nav-item span { width: 17px; font-size: 17px; text-align: center; }
 .nav-item:hover, .nav-item.active { background: #ffffff14; color: #fff; }
 .nav-item.active { box-shadow: inset 3px 0 #63c6aa; }
-.sidebar-bottom { margin-top: auto; padding: 16px 7px 4px; border-top: 1px solid #ffffff1c; display: flex; align-items: center; gap: 10px; }
+.sidebar-bottom { margin-top: auto; padding: 16px 7px 4px; border-top: 1px solid #ffffff1c; display: grid; gap: 10px; }
+.sidebar-profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #63c6aa; color: #133447; font-weight: 700; }
 .profile-copy { display: grid; gap: 3px; min-width: 0; flex: 1; overflow: hidden; }
 .profile-copy strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-copy span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #91a7b2; text-transform: capitalize; }
-.logout-button { flex: none; border: 1px solid #ffffff30; border-radius: 6px; padding: 6px 8px; color: #d5e0e5; background: transparent; font-size: 11px; font-weight: 600; }
+.logout-button { justify-self: end; border: 1px solid #ffffff30; border-radius: 6px; padding: 6px 8px; color: #d5e0e5; background: transparent; font-size: 11px; font-weight: 600; }
 .logout-button:hover { color: white; background: #ffffff14; }
 .dashboard-main { min-width: 0; padding: 48px clamp(24px, 4vw, 64px); }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
