@@ -11,17 +11,20 @@ const usersRouter = require("./users/routes");
 
 const app = express();
 
-function ensureCompletedTicketStatus() {
+function ensureResolvedTicketStatus() {
     return new Promise((resolve, reject) => {
         db.query("SHOW COLUMNS FROM tickets LIKE 'status'", (error, columns) => {
             if (error) return reject(error);
             const statusType = columns[0]?.Type || "";
-            if (statusType.includes("'completed'")) return resolve(false);
+            if (!statusType.includes("'completed'")) return resolve(false);
 
-            db.query(
-                "ALTER TABLE tickets MODIFY COLUMN status ENUM('open', 'in_progress', 'completed', 'resolved', 'closed') NOT NULL DEFAULT 'open'",
-                (migrationError) => migrationError ? reject(migrationError) : resolve(true)
-            );
+            db.query("UPDATE tickets SET status = 'resolved' WHERE status = 'completed'", (updateError) => {
+                if (updateError) return reject(updateError);
+                db.query(
+                    "ALTER TABLE tickets MODIFY COLUMN status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL DEFAULT 'open'",
+                    (migrationError) => migrationError ? reject(migrationError) : resolve(true)
+                );
+            });
         });
     });
 }
@@ -73,9 +76,9 @@ app.use((error, req, res, next) => {
 if (require.main === module) {
     const PORT = Number(process.env.PORT || 5000);
 
-    ensureCompletedTicketStatus()
+    ensureResolvedTicketStatus()
         .then((migrated) => {
-            console.log(migrated ? "Added completed to ticket statuses." : "Ticket status schema is current.");
+            console.log(migrated ? "Migrated completed tickets to resolved and removed completed status." : "Ticket status schema is current.");
             app.listen(PORT, "0.0.0.0", () => {
                 console.log(`Server listening on port ${PORT}`);
             });
