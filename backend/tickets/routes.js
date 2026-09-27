@@ -191,6 +191,7 @@ const updateTicket = async (req, res) => {
         await query(`UPDATE tickets SET ${assignments} WHERE id = ?`, values);
         return res.json({ message: "Ticket updated" });
     } catch (error) {
+        console.error("Ticket update failed:", error.code || "UNKNOWN", error.sqlState || "");
         return res.status(500).json({ message: "Unable to update ticket" });
     }
 };
