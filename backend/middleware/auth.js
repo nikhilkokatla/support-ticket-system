@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { query } = require("../utils/database");
+const { getSessionCookieOptions } = require("../utils/session-cookie");
 
 const cookieName = "support_ticket_token";
 
@@ -23,14 +24,14 @@ async function authenticate(req, res, next) {
     try {
         payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
-        res.clearCookie(cookieName, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/" });
+        res.clearCookie(cookieName, getSessionCookieOptions());
         return res.status(401).json({ message: "Please log in to continue" });
     }
 
     try {
         const users = await query("SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1", [payload.sub]);
         if (!users.length) {
-            res.clearCookie(cookieName, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/" });
+            res.clearCookie(cookieName, getSessionCookieOptions());
             return res.status(401).json({ message: "Please log in to continue" });
         }
         req.user = users[0];

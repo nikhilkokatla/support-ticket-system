@@ -2,16 +2,10 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../db");
+const { getSessionCookieOptions } = require("../utils/session-cookie");
 
 const router = express.Router();
 const cookieName = "support_ticket_token";
-const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/"
-};
-
 function getTokenFromRequest(req) {
     const cookieHeader = req.headers.cookie || "";
     const cookie = cookieHeader
@@ -67,7 +61,7 @@ router.post("/login", async (req, res) => {
             { expiresIn: "8h" }
         );
 
-        res.cookie(cookieName, token, { ...cookieOptions, maxAge: 8 * 60 * 60 * 1000 });
+        res.cookie(cookieName, token, { ...getSessionCookieOptions(), maxAge: 8 * 60 * 60 * 1000 });
         return res.json({
             message: "Login successful",
             user: { id: user.id, name: user.name, email: user.email, role: user.role }
@@ -91,18 +85,18 @@ router.get("/me", async (req, res) => {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
         const user = await getPublicUser(payload.sub);
         if (!user) {
-            res.clearCookie(cookieName, cookieOptions);
+            res.clearCookie(cookieName, getSessionCookieOptions());
             return res.status(401).json({ message: "Not logged in" });
         }
         return res.json({ user });
     } catch (error) {
-        res.clearCookie(cookieName, cookieOptions);
+        res.clearCookie(cookieName, getSessionCookieOptions());
         return res.status(401).json({ message: "Not logged in" });
     }
 });
 
 router.post("/logout", (req, res) => {
-    res.clearCookie(cookieName, cookieOptions);
+    res.clearCookie(cookieName, getSessionCookieOptions());
     return res.json({ message: "Logged out successfully" });
 });
 
